@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -53,6 +54,9 @@ namespace FileNameBatchRenamer
         private readonly TextBox suffixTextBox;
         private readonly CheckBox modifyExtensionCheckBox;
         private readonly ComboBox sortComboBox;
+        private readonly ComboBox ruleComboBox;
+        private readonly TextBox ruleStartTextBox;
+        private readonly TextBox ruleEndTextBox;
         private readonly DataGridView filesGrid;
         private readonly CheckBox selectAllCheckBox;
         private readonly ToolStripStatusLabel statusLabel;
@@ -110,7 +114,7 @@ namespace FileNameBatchRenamer
             var controlsPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 92,
+                Height = 126,
                 Padding = new Padding(16, 10, 16, 8),
                 BackColor = Color.White
             };
@@ -187,6 +191,50 @@ namespace FileNameBatchRenamer
             filterHint.ForeColor = Color.FromArgb(96, 110, 128);
             filterHint.Font = new Font("Microsoft YaHei UI", 8.5f, FontStyle.Regular, GraphicsUnit.Point);
 
+            var ruleLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                ColumnCount = 7,
+                RowCount = 1
+            };
+            ruleLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 54));
+            ruleLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 208));
+            ruleLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48));
+            ruleLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 68));
+            ruleLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48));
+            ruleLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 68));
+            ruleLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 84));
+
+            ruleComboBox = new ComboBox
+            {
+                Dock = DockStyle.Fill,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            ruleComboBox.Items.AddRange(new object[]
+            {
+                "选择规则",
+                "删除日期前缀",
+                "删除日期后缀",
+                "数字改中文",
+                "只保留区间内文字"
+            });
+            ruleComboBox.SelectedIndex = 0;
+            ruleComboBox.SelectedIndexChanged += delegate { UpdateRuleInputState(); };
+
+            ruleStartTextBox = new TextBox { Dock = DockStyle.Fill, Enabled = false };
+            ruleEndTextBox = new TextBox { Dock = DockStyle.Fill, Enabled = false };
+            var applyRuleButton = CreateButton("处理", Color.FromArgb(229, 234, 240));
+            applyRuleButton.Click += delegate { ApplySelectedRule(); };
+
+            ruleLayout.Controls.Add(CreateLabel("规则", ContentAlignment.MiddleLeft), 0, 0);
+            ruleLayout.Controls.Add(ruleComboBox, 1, 0);
+            ruleLayout.Controls.Add(CreateLabel("起始", ContentAlignment.MiddleLeft), 2, 0);
+            ruleLayout.Controls.Add(ruleStartTextBox, 3, 0);
+            ruleLayout.Controls.Add(CreateLabel("结束", ContentAlignment.MiddleLeft), 4, 0);
+            ruleLayout.Controls.Add(ruleEndTextBox, 5, 0);
+            ruleLayout.Controls.Add(applyRuleButton, 6, 0);
+
             filterLayout.Controls.Add(CreateLabel("后缀筛选", ContentAlignment.MiddleLeft), 0, 0);
             filterLayout.Controls.Add(suffixTextBox, 1, 0);
             filterLayout.Controls.Add(modifyExtensionCheckBox, 2, 0);
@@ -195,6 +243,7 @@ namespace FileNameBatchRenamer
             filterLayout.Controls.Add(applyFilterButton, 5, 0);
             filterLayout.Controls.Add(filterHint, 6, 0);
             controlsPanel.Controls.Add(folderLayout);
+            controlsPanel.Controls.Add(ruleLayout);
             controlsPanel.Controls.Add(filterLayout);
 
             filesGrid = CreateGrid();
@@ -464,6 +513,151 @@ namespace FileNameBatchRenamer
             CaptureVisibleDrafts();
             isShowingExtensions = modifyExtensionCheckBox.Checked;
             RefreshFiles(false, false);
+        }
+
+        private void UpdateRuleInputState()
+        {
+            bool rangeRuleSelected = ruleComboBox.SelectedIndex == 4;
+            ruleStartTextBox.Enabled = rangeRuleSelected;
+            ruleEndTextBox.Enabled = rangeRuleSelected;
+            if (!rangeRuleSelected)
+            {
+                ruleStartTextBox.BackColor = SystemColors.Control;
+                ruleEndTextBox.BackColor = SystemColors.Control;
+            }
+            else
+            {
+                ruleStartTextBox.BackColor = Color.White;
+                ruleEndTextBox.BackColor = Color.White;
+            }
+        }
+
+        private void ApplySelectedRule()
+        {
+            int ruleIndex = ruleComboBox.SelectedIndex;
+            if (ruleIndex <= 0)
+            {
+                MessageBox.Show(this, "请先从规则下拉菜单中选择一项处理规则。", "请选择规则", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            int start = 0;
+            int end = 0;
+            if (ruleIndex == 4)
+            {
+                if (!int.TryParse(ruleStartTextBox.Text.Trim(), out start)
+                    || !int.TryParse(ruleEndTextBox.Text.Trim(), out end)
+                    || start < 1
+                    || end < start)
+                {
+                    MessageBox.Show(this, "请输入有效的文字区间，例如起始 3、结束 12。", "区间无效", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
+            filesGrid.EndEdit();
+            isApplyingBulkSelection = true;
+            int processedCount = 0;
+            try
+            {
+                foreach (DataGridViewRow row in filesGrid.Rows)
+                {
+                    string input = GetRuleInputName(row);
+                    string result = ApplyNameRule(input, ruleIndex, start, end);
+                    row.Cells[NewNameColumn].Value = result;
+                    row.Cells[SelectColumn].Value = !string.IsNullOrWhiteSpace(result);
+                    processedCount++;
+                }
+            }
+            finally
+            {
+                isApplyingBulkSelection = false;
+            }
+
+            CaptureVisibleDrafts();
+            UpdateSelectAllHeader();
+            string ruleName = Convert.ToString(ruleComboBox.SelectedItem);
+            statusLabel.Text = string.Format("已对当前筛选结果的 {0} 行应用规则“{1}”，可继续叠加下一条规则。", processedCount, ruleName);
+        }
+
+        private string GetRuleInputName(DataGridViewRow row)
+        {
+            string value = Convert.ToString(row.Cells[NewNameColumn].Value ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                value = Convert.ToString(row.Cells[CurrentNameColumn].Value ?? string.Empty).Trim();
+            }
+            if (!modifyExtensionCheckBox.Checked)
+            {
+                var path = row.Tag as string;
+                string originalExtension = string.IsNullOrEmpty(path) ? string.Empty : Path.GetExtension(path);
+                if (!string.IsNullOrEmpty(originalExtension)
+                    && value.EndsWith(originalExtension, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = value.Substring(0, value.Length - originalExtension.Length);
+                }
+            }
+            return value;
+        }
+
+        private static string ApplyNameRule(string value, int ruleIndex, int start, int end)
+        {
+            switch (ruleIndex)
+            {
+                case 1:
+                    return RemoveDatePrefix(value);
+                case 2:
+                    return RemoveDateSuffix(value);
+                case 3:
+                    return ConvertDigitsToChinese(value);
+                case 4:
+                    return KeepTextRange(value, start, end);
+                default:
+                    return value;
+            }
+        }
+
+        private static string RemoveDatePrefix(string value)
+        {
+            return new Regex(
+                @"^\s*[\[\(【]?(?:(?:19|20)\d{2}[-_.]\d{1,2}[-_.]\d{1,2}|\d{8}|(?:19|20)\d{2}年\d{1,2}月\d{1,2}日?)[\]\)】]?[\s_.-]*",
+                RegexOptions.CultureInvariant).Replace(value, string.Empty, 1);
+        }
+
+        private static string RemoveDateSuffix(string value)
+        {
+            return new Regex(
+                @"[\s_.-]*[\[\(【]?(?:(?:19|20)\d{2}[-_.]\d{1,2}[-_.]\d{1,2}|\d{8}|(?:19|20)\d{2}年\d{1,2}月\d{1,2}日?)[\]\)】]?\s*$",
+                RegexOptions.CultureInvariant).Replace(value, string.Empty, 1);
+        }
+
+        private static string ConvertDigitsToChinese(string value)
+        {
+            const string chineseDigits = "〇一二三四五六七八九";
+            var builder = new StringBuilder(value.Length);
+            foreach (char character in value)
+            {
+                if (character >= '0' && character <= '9')
+                {
+                    builder.Append(chineseDigits[character - '0']);
+                }
+                else
+                {
+                    builder.Append(character);
+                }
+            }
+            return builder.ToString();
+        }
+
+        private static string KeepTextRange(string value, int start, int end)
+        {
+            if (string.IsNullOrEmpty(value) || start > value.Length)
+            {
+                return string.Empty;
+            }
+            int startIndex = start - 1;
+            int length = Math.Min(end, value.Length) - startIndex;
+            return length <= 0 ? string.Empty : value.Substring(startIndex, length);
         }
 
         private void UpdateNameColumnHeaders()

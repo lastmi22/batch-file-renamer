@@ -7,3 +7,4 @@
 - Added spreadsheet-style whole-column selection and Ctrl+C / Ctrl+V file-name workflows.
 - Added optional extension editing, batch confirmation, conflict validation, and safe temporary renaming for swaps.
 - Added the AI DO / 实干局 visual identity and Windows application icon.
+- Added composable filename rules for date removal, digit conversion, and inclusive text ranges.
