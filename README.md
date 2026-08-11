@@ -1,8 +1,8 @@
 # 文件名批量修改工具
 
-一款 Windows 桌面工具，用于批量读取、筛选、复制、粘贴和修改文件名。由 AI DO / 实干局发布。
+一款 Windows 桌面工具，用于批量读取、筛选、复制、粘贴和修改文件名。由 AI 实干局发布。
 
-![AI DO / 实干局 Logo](assets/logo.svg)
+![AI 实干局品牌标志](assets/logo.svg)
 
 ## v0.1.0
 
@@ -35,7 +35,7 @@
 ## 目录
 
 ```text
-assets/  AI DO / 实干局 Logo 与 Windows 图标
+assets/  AI 实干局品牌资源
 src/     WinForms 源码
 build.ps1
 ```
