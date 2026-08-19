@@ -10,11 +10,11 @@ using System.Threading;
 using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("File Name Batch Renamer")]
-[assembly: System.Reflection.AssemblyDescription("Batch file renaming utility by AI DO")]
-[assembly: System.Reflection.AssemblyCompany("AI DO")]
+[assembly: System.Reflection.AssemblyDescription("Batch file renaming utility by AI 实干局")]
+[assembly: System.Reflection.AssemblyCompany("AI 实干局")]
 [assembly: System.Reflection.AssemblyProduct("File Name Batch Renamer")]
-[assembly: System.Reflection.AssemblyVersion("0.1.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("0.1.0.0")]
+[assembly: System.Reflection.AssemblyVersion("0.1.1.0")]
+[assembly: System.Reflection.AssemblyFileVersion("0.1.1.0")]
 
 namespace FileNameBatchRenamer
 {

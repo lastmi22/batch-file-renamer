@@ -4,9 +4,9 @@
 
 ![AI 实干局品牌标志](assets/logo.svg)
 
-## v0.1.0
+## v0.1.1
 
-下载 Release 中的 `文件名批量修改工具-v0.1.0.exe` 后直接运行。程序默认读取 EXE 所在文件夹，并始终排除自身，无论 EXE 被改为什么名称。
+下载 Release 中的 `FileNameBatchRenamer-v0.1.1.exe` 后直接运行。程序默认读取 EXE 所在文件夹，并始终排除自身，无论 EXE 被改为什么名称。
 
 ## 功能
 
@@ -30,12 +30,11 @@
 ./build.ps1
 ```
 
-构建结果位于 `dist/FileNameBatchRenamer.exe`。版本号由源码中的程序集元数据定义，目前为 `0.1.0.0`。
+构建结果位于 `dist/FileNameBatchRenamer.exe`。版本号由源码中的程序集元数据定义，目前为 `0.1.1.0`。
 
 ## 目录
 
 ```text
-assets/  AI 实干局品牌资源
 src/     WinForms 源码
 build.ps1
 ```
