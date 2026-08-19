@@ -2,8 +2,6 @@
 
 一款 Windows 桌面工具，用于批量读取、筛选、复制、粘贴和修改文件名。由 AI 实干局发布。
 
-![AI 实干局品牌标志](assets/logo.svg)
-
 ## v0.1.1
 
 下载 Release 中的 `FileNameBatchRenamer-v0.1.1.exe` 后直接运行。程序默认读取 EXE 所在文件夹，并始终排除自身，无论 EXE 被改为什么名称。

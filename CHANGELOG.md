@@ -12,4 +12,3 @@
 - Added folder loading, suffix filtering, and name, time, and extension sorting.
 - Added spreadsheet-style whole-column selection and Ctrl+C / Ctrl+V file-name workflows.
 - Added optional extension editing, batch confirmation, conflict validation, and safe temporary renaming for swaps.
-- Added the AI 实干局 brand identity.
